@@ -1,78 +1,56 @@
-import React, { Component } from "react";
+import React, { useEffect,useState } from "react";
 import NewsItem from "./NewsItem";
 import Spinner from "./Spinner";
 import PropTypes from 'prop-types'
-export class News extends Component {
 
-
-    capitalizeFirstLetter = (string) => {
+const News = (props)=>{
+    const [articles, setArticles] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [page, setPage] = useState(1)
+    const [totalResults, setTotalResults] = useState(0)
+    const [pageSize, setPagesize] = useState(6)
+    
+    const capitalizeFirstLetter = (string) => {
         return string.charAt(0).toUpperCase() + string.slice(1);
     } 
-    constructor(props) {
-        super();
-        // console.log("Hello I am a constructor from news component");
-        this.state = {
-            articles: [],
-            loading: false,
-            page: 1,
-        };
-        document.title = `${this.capitalizeFirstLetter(props.category)} - NewsApp`;
-
-    }
-        
-    
-
-    async updateNews() {
-        const url =
-            `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=5fb257fcabbb46738bd92a383ba74b52&page=${this.state.page}&pageSize=${this.props.pageSize}`;
-        this.setState({ loading: true });
+    const updateNews = async () => {
+        const url = `https://newsapi.org/v2/top-headlines?country=in&category=${props.category}&apiKey=a7cbebcf299c4f58bad9d4a67e8ac3bb&page=${page}&pageSize=${pageSize}`;
+        setLoading(true);
         let data = await fetch(url);
         let parsedData = await data.json();
-
-        this.setState({
-            articles: parsedData.articles,
-            totalResults: parsedData.totalResults,
-            loading: false
-        });
+        setArticles(parsedData.articles);
+        setPagesize(pageSize);
+        setTotalResults(parsedData.totalResults);
+        setLoading(false);
     }
+    useEffect(() => {
+        document.title = `NewsApp - ${capitalizeFirstLetter(props.category)}`;
+        updateNews();
 
-    async componentDidMount() {
-       this.updateNews();
-    }
-
-    handlback = async () => {
-        this.setState({ loading: false, page: this.state.page - 1,  });
-        this.updateNews();
+        // eslint-disable-next-line
+    }, [])
+    
+    const handleback = async () => {
+        setPage(page - 1);
+        updateNews();
     };
-    handlenext = async () => {
-        // console.log("Next");
-        // if (!this.state.page + 1 > Math.ceil(this.state.totalResults / 5)) {
-        //     alert("No more pages as per api 😔");
-        // } else {
-        //     let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=5fb257fcabbb46738bd92a383ba74b52&page=${this.state.page + 1
-        //         }&pageSize=${this.props.pagesize}`;
-        //     let data = await fetch(url);
-        //     let parsedData = await data.json();
-        //     this.setState({
-        //         page: this.state.page + 1,
-        //         articles: parsedData.articles,
-        //     });
-        // }
-
-        this.setState({ loading: false, page: this.state.page + 1  });
-        this.updateNews();
+    const handlenext = async () => {
+            setPage(page + 1);
+            updateNews();
+        
+        
     };
-
-    render() {
+  
+    
+  
         return (
             <>
                 <div className="container my-3">
-                    <div className="text-center" style={{ margin: '40px 0px' }}><h2>Top Headlines on {this.capitalizeFirstLetter(this.props.category)} </h2></div>
-                    {this.state.loading && <Spinner />}
-
-
+                    <div className="text-center" style={{ margin: '40px 0px' }}><h2>Top Headlines on {capitalizeFirstLetter(props.category)} </h2></div>
+                    {loading && <Spinner />}
+                    
                     <div className="row">
-                        {!this.state.loading && this.state.articles.map((element) => {
+                        {!loading && articles.map((element) => {
                             const publishedDate = new Date(element.publishedAt);
 
                             return (
@@ -99,39 +77,38 @@ export class News extends Component {
 
                         <div className="container d-flex justify-content-between">
                             <button
-                                disabled={this.state.page <= 1}
+                                disabled={page <= 1}
                                 className="btn btn-dark"
                                 type="button"
-                                onClick={this.handlback}
+                                onClick={handleback}
                                 style={{ margin: '0px 10px 0px 0px' }}
                             >
                                 &larr; Previous
                             </button>
                             <button
-                                disabled={this.state.page + 1 > Math.ceil(this.state.totalResults / this.props.pagesize)}
+                                disabled={page + 1 > Math.ceil(totalResults / pageSize)}
                                 className="btn btn-dark"
                                 type="button"
-                                onClick={this.handlenext}
+                                onClick={handlenext}
                                 style={{ margin: '0px 0px 0px 10px' }}
                             >
                                 Next &rarr;
                             </button>
                         </div>
                     </div>
+                
                 </div>
             </>
         );
     }
-}
+
 News.defaultProps = {
     country: 'in',
-    pageSize: 8,
     category: 'general',
 }
 
 News.propTypes = {
     country: PropTypes.string,
-    pageSize: PropTypes.number,
     category: PropTypes.string,
 }
 
